@@ -1,0 +1,64 @@
+---
+title: "LODES Work"
+author: "Max O'Krepki"
+date: "June 20, 2018"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(readr)
+library(dplyr)
+library(purrr)
+library(tidyr)
+```
+
+Important links 
+https://lehd.ces.census.gov/data/
+https://lehd.ces.census.gov/data/lodes/LODES7/LODESTechDoc7.3.pdf
+https://lehd.ces.census.gov/data/lodes/LODES7/
+
+tk - may not need the work above 
+
+Now work with the od data set. Only really need S000 column. Time how long it takes to read just for fun. 
+```{r}
+ptm <- proc.time()
+ca_od_2015 <- read_csv("C:/Users/Max/Dropbox/City_Systems/LODES/ca_od_2015.csv")
+proc.time() - ptm
+```
+It takes only 27.14s to read in 14713690x13 dataframe. Wow. 
+
+```{r}
+# ca_od_2015 <- ca_od_2015[,c("w_geocode","h_geocode","S000")]
+ptm <- proc.time()
+ca_od_2015$w_bg <- map_chr(ca_od_2015$w_geocode, function(x) substr(x, 1,12))
+ca_od_2015$h_bg <- map_chr(ca_od_2015$h_geocode, function(x) substr(x, 1,12))
+
+ca_od_2015 <- ca_od_2015 %>% select(-c(createdate, h_geocode, w_geocode))
+proc.time() - ptm
+
+# ca_od_2015_save <- ca_od_2015
+```
+89.79 for the above operation. Again, much wow. 
+
+
+As per this post, https://stackoverflow.com/questions/33152620/how-to-group-by-two-columns-in-r, I'm pretty sure it's correct to group by w_bg first. 
+```{r}
+ptm <- proc.time()
+ca_od_2015 <- ca_od_2015 %>% group_by(w_bg, h_bg) %>% summarise_all(sum)
+proc.time() - ptm
+```
+
+
+```{r}
+bgs <- c("060014001001","060014003002")
+
+filter(ca_od_2015, w_bg %in% bgs)
+```
+
+
